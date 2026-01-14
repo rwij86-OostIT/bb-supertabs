@@ -6,9 +6,11 @@
   "license": "MIT",
   "svelte": "index.js",
   "module": "dist/plugin.min.js",
+  "files": ["dist", "index.js", "src"],
+  "main": "dist/plugin.min.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build.js",
     "preview": "vite preview"
   },
   "dependencies": {
