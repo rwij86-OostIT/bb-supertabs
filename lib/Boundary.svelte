@@ -3,16 +3,23 @@
     import pkg from "../package.json"
     import { getContext } from "svelte"
 
-    export let error = null
+  /**
+   * @typedef {Object} Props
+   * @property {any} [error]
+   * @property {import('svelte').Snippet} [children]
+   */
+
+  /** @type {Props} */
+  let { error = null, children } = $props();
 
     const { styleable } = getContext("sdk")
     const component = getContext("component")
 
-    $: styles = {
+    let styles = $derived({
       normal: {},
       id: $component.id,
       interactive: true
-    }
+    })
 </script>
 
 {#if $error}
@@ -23,7 +30,7 @@
     </div>
   </div>
 {:else}
-  <slot />
+  {@render children?.()}
 {/if}
 
 <style>
