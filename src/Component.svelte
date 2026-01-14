@@ -1,27 +1,47 @@
 <script>
+  import { run } from 'svelte/legacy';
+
   import { getContext, setContext, onMount, onDestroy  } from "svelte"
   import { writable } from "svelte/store"; 
 
   import Tab from "./lib/Tab.svelte"  
-  export let size = "M"
-  export let direction
-  export let centered = false
-  export let quiet = false
-  export let compact = false
-  export let emphasized = false
-  export let emphasizedColor = "var(--primaryColor)"
-  export let onTabChange
-  export let initialIndex
+  /**
+   * @typedef {Object} Props
+   * @property {string} [size]
+   * @property {any} direction
+   * @property {boolean} [centered]
+   * @property {boolean} [quiet]
+   * @property {boolean} [compact]
+   * @property {boolean} [emphasized]
+   * @property {string} [emphasizedColor]
+   * @property {any} onTabChange
+   * @property {any} initialIndex
+   * @property {import('svelte').Snippet} [children]
+   */
+
+  /** @type {Props} */
+  let {
+    size = "M",
+    direction,
+    centered = false,
+    quiet = false,
+    compact = false,
+    emphasized = false,
+    emphasizedColor = "var(--primaryColor)",
+    onTabChange,
+    initialIndex,
+    children
+  } = $props();
 
   const { styleable, builderStore, componentStore, screenStore } = getContext("sdk")
   const component = getContext("component")
 
-  let container
-  let contents
-  let vertical
-  let tabItems = []
+  let container = $state()
+  let contents = $state()
+  let vertical = $state()
+  let tabItems = $state([])
   let poller
-  let initTab 
+  let initTab = $state() 
 
   // Set Store initial State
   let selectedTab = {
@@ -32,20 +52,8 @@
   const tabStore = writable(selectedTab)
   setContext("tabStore", tabStore) 
 
-  $: vertical = (direction === "vertical")
-  $: initTab = Number (initialIndex) ?? 0;
 
-  $: populateTabsFromChildren($screenStore)
-  $: hideNonSelected($tabStore.id)
-  $: calculateIndicator($tabStore.id, vertical)
-
-  // If in the builder preview, show this appropriate Container if a child is selected
-  $: {
-    if ( $builderStore.inBuilder && tabItems.length > 0 ) {
-      let pos = tabItems?.findIndex( e => ( $componentStore?.selectedComponentPath.includes(e.id) ) )
-      $tabStore.id = pos > -1 ? tabItems[pos].id : tabItems[0].id;  
-      }     
-    } 
+ 
 
   function populateTabsFromChildren ( full ) {
     if ( contents ) {
@@ -77,7 +85,7 @@
     }
   }
 
-  let left, top, width, height
+  let left = $state(), top = $state(), width = $state(), height = $state()
   function calculateIndicator ()  
   {
     if ($tabStore.id) {
@@ -105,11 +113,33 @@
   })
 
   onDestroy ( () => clearInterval(poller) )
+  run(() => {
+    vertical = (direction === "vertical")
+  });
+  run(() => {
+    initTab = Number (initialIndex) ?? 0;
+  });
+  run(() => {
+    populateTabsFromChildren($screenStore)
+  });
+  run(() => {
+    hideNonSelected($tabStore.id)
+  });
+  run(() => {
+    calculateIndicator($tabStore.id, vertical)
+  });
+  // If in the builder preview, show this appropriate Container if a child is selected
+  run(() => {
+    if ( $builderStore.inBuilder && tabItems.length > 0 ) {
+      let pos = tabItems?.findIndex( e => ( $componentStore?.selectedComponentPath.includes(e.id) ) )
+      $tabStore.id = pos > -1 ? tabItems[pos].id : tabItems[0].id;  
+      }     
+    });
 </script>
 
 <div use:styleable={$component.styles}>
  
-    {#if $component?.children != 0 }
+    {#if $component?.children != 0}
     <div 
       bind:this={container} 
       class="wrapper" 
@@ -141,7 +171,7 @@
 
 
       <div bind:this={contents} class="tabContents"> 
-        <slot />
+        {@render children?.()}
       </div>
 
     </div>
